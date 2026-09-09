@@ -113,7 +113,7 @@ def write_rows(path: Path, rows: Iterable[dict[str, str]], headers: list[str] | 
     headers = headers or FIELDS
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=headers, extrasaction="ignore")
+        writer = csv.DictWriter(handle, fieldnames=headers, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow({field: row.get(field, "") for field in headers})
@@ -227,7 +227,7 @@ def command_download_plan(args: argparse.Namespace) -> int:
     ]
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["paper_id", "pdf_path", "download_url"], delimiter="\t")
+        writer = csv.DictWriter(handle, fieldnames=["paper_id", "pdf_path", "download_url"], delimiter="\t", lineterminator="\n")
         writer.writeheader()
         writer.writerows({key: row.get(key, "") for key in writer.fieldnames} for row in selected)
     print(f"{output}: {len(selected)} 篇待下载")

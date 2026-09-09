@@ -35,7 +35,7 @@ user-invocable: true
 
 ## 安装与依赖选择（发布版）
 
-正式安装和运行前必须先阅读 **[install-dependencies.md](references/install-dependencies.md)** 并完成验收。ZCode 内置浏览器控制（内置能力，无需安装）是 CNKI 检索的强制依赖；Google Scholar 用 WebFetch/WebSearch 完成；Zotero、Zotero Connector、Zotero MCP 是可选增强，只在用户需要保存题录/全文、联动本地文献库或读取 Zotero 附件全文时启用。
+正式安装和运行前必须先阅读 **[install-dependencies.md](references/install-dependencies.md)** 并完成验收。ZCode 内置浏览器控制（内置能力，无需安装）是 CNKI 检索的强制依赖；Google Scholar 用 WebFetch/WebSearch 完成；Zotero、Zotero Connector、Zotero MCP 是可选增强，只在用户需要保存题录/全文、联动本地文献库或读取 Zotero 附件全文时启用。Zotero MCP 的推荐实现与操作协议见 **[zotero-local-mcp.md](references/zotero-local-mcp.md)**。
 
 **执行铁律：**
 
@@ -44,6 +44,7 @@ user-invocable: true
 - Phase 0/Step 0Q 必须询问用户是否启用 Zotero 和 Zotero MCP。
 - 用户不想保存论文全文或不使用本地库时，不得强制安装 Zotero；本地文献库阶段记录为 `用户明确暂缓`，继续在线检索。
 - 若用户选择 Zotero/Zotero MCP，则按 `references/install-dependencies.md` 完成 Zotero Desktop、Connector、MCP 工具验收后再执行本地库或全文保存阶段。
+- 验收通过后，本地库检索、摘要即时入库、全文深读和集合登记按 `references/zotero-local-mcp.md` 执行；不得用 WebSearch 或顾问意见冒充 Zotero 完成状态。
 - 所有安装验收和失败处理以 `references/install-dependencies.md` 为准。
 
 ## 参数
@@ -142,7 +143,7 @@ options: [
 - **CNKI 检索入口铁律**：CNKI 正式检索默认且只默认专业检索页 `https://kns.cnki.net/starter/advanced`（跳转 `kns.cnki.net/kns8s/AdvSearch` 后切「专业检索」标签）。基础检索框只允许做单个自然短语、专名或站点可达性临时测试。不得把 WebSearch/Google Scholar 布尔串粘进基础检索框。多关键词先拆概念组转专业检索式：同义/近义词用 `+` 并入同一 `SU=(...)`，不同概念分轮宽检索，只有结果过大且用户确认跨概念收窄时才用 `*`。
 - **CNKI 结果量控制铁律（不可跳过）**：专业检索触发后默认点「学术期刊N」筛选只保留期刊论文；结果仍过大时默认按被引排序（`li#CF`）取高影响文献。若宽检索命中为 0，立即回退上一轮宽松检索式，不继续叠加限制。**每轮 CNKI 检索返回后，必须在回复中显式报告命中总数和是否触发筛选收窄，作为阶段确认的一部分。**
 - **CNKI 来源不可替代铁律**：CNKI 阶段只能由浏览器控制中的 CNKI（kns8s）网页操纵完成，包括专业检索页、结果页、详情页、期刊页或导出页。WebSearch、Google Scholar、普通搜索引擎、`cnki-researcher` 或 lit agents 只能做关键词准备、概念组设计和筛选建议；这些来源不得标记为 CNKI 完成状态，也不得填充 CNKI 论文清单字段。
-- **Zotero 摘要存储铁律**：每篇进入正式论文清单（相关度 H 或 M）的论文，必须在抓取摘要后**立即**通过当前可用的 Zotero MCP 或 Zotero Connector 存入 Zotero，且包含 `abstractNote` 字段。不得等所有检索结束后批量补存。存入后记录 Zotero `item_key` 或连接器保存状态到搜索日志的论文清单中。若 Zotero MCP/Connector 不可用，记录 `Zotero 不可用，摘要未保存` 并写入 `paper-workspace/02-literature/abstracts-pending-zotero.md` 待后续补存。
+- **Zotero 摘要存储铁律**：每篇进入正式论文清单（相关度 H 或 M）的论文，必须在抓取摘要后**立即**通过当前可用的 Zotero MCP 或 Zotero Connector 存入 Zotero，且包含 `abstractNote` 字段。不得等所有检索结束后批量补存。存入后记录 Zotero `item_key` 或连接器保存状态到搜索日志的论文清单中，并写入 `paper-registry.csv` 的 `source_id`（来源 `zotero-local-mcp`）。若 Zotero MCP/Connector 不可用，记录 `Zotero 不可用，摘要未保存` 并写入 `paper-workspace/02-literature/abstracts-pending-zotero.md` 待后续补存。操作步骤见 [zotero-local-mcp.md](references/zotero-local-mcp.md)。
 - **阶段判断更新规则**：每个检索阶段完成后，记录新文献改变或限制了哪些既有判断、需要补哪类证据；写入 stage-syntheses.md 仅作过程记录。不得按数据库来源直接拼接为综述正文。
 - WebSearch 检索策略详见 **[search-strategies.md](references/search-strategies.md)**
 - CNKI 闭环协议详见 **[cnki-kns8s-closed-loop.md](references/cnki-kns8s-closed-loop.md)**；免弹窗下载器为 `scripts/cnki/kns8s-download.sh`，按需读取协议对应章节，不得一次性加载全部代码。
@@ -214,7 +215,7 @@ options: [
 
 ## 质量检查清单
 
-**搜索覆盖：** [ ]Step 0a 检索方向预确认已完成 [ ]Step 0b 检索阶段已确认 [ ]每阶段后用户确认 [ ]CNKI total>200 已执行 CSSCI/hx 收窄 [ ]>1000 命中已做学科边界讨论或来源类别收窄（Step 8.2） [ ]相关度+被引双排序已执行（Step 8.3） [ ]两序首页文献已逐条详情页抓摘要（Step 8.3） [ ]高被引锚文献引证/共引已执行（Step 8.4） [ ]本地文献库 [ ]CNKI状态已记录 [ ]Google Scholar状态已记录 [ ]英文 exa MCP 已主动使用或记录回退（search-strategies exa 节） [ ]多轮搜索按模式 [ ]Annual Reviews [ ]论文数达标 [ ]H/M论文摘要已存入 Zotero 或待补存清单 [ ]阶段综述段落已输出
+**搜索覆盖：** [ ]Step 0a 检索方向预确认已完成 [ ]Step 0b 检索阶段已确认 [ ]每阶段后用户确认 [ ]CNKI total>200 已执行 CSSCI/hx 收窄 [ ]>1000 命中已做学科边界讨论或来源类别收窄（Step 8.2） [ ]相关度+被引双排序已执行（Step 8.3） [ ]两序首页文献已逐条详情页抓摘要（Step 8.3） [ ]高被引锚文献引证/共引已执行（Step 8.4） [ ]本地文献库 [ ]Zotero MCP 已按 zotero-local-mcp.md 验收或记录暂缓/能力缺失 [ ]CNKI状态已记录 [ ]Google Scholar状态已记录 [ ]英文 exa MCP 已主动使用或记录回退（search-strategies exa 节） [ ]多轮搜索按模式 [ ]Annual Reviews [ ]论文数达标 [ ]H/M论文摘要已存入 Zotero 或待补存清单 [ ]阶段综述段落已输出
 
 **下载与全文化：** [ ]Top-N 判选理由已写入注册表 [ ]唯一 paper-registry.csv 已初始化 [ ]PDF 均在 papers/ 或被登记为外部输入 [ ]下载器完成 .part→解析校验→归档 [ ]解析结果位于 fulltext/paper_id/document.md [ ]下载、解析、核读状态均已回写 [ ]失败项保留原因与续跑状态
 
@@ -236,6 +237,7 @@ options: [
 | Phase 1 | [phase-1-search.md](phases/phase-1-search.md) | 七步搜索流程 |
 | Phase 1 | [cnki-kns8s-closed-loop.md](references/cnki-kns8s-closed-loop.md) | CNKI kns8s 检索→分析→下载闭环协议 + `scripts/cnki/kns8s-download.sh` |
 | Phase 1 | [phase-1-search.md](phases/phase-1-search.md) Step 8–10 | 实测修正协议：操作修正、>1000 来源类别收窄、双排序首页摘要、引证/共引、Top-N 下载与 CSV、MinerU 全文化 |
+| Phase 0/1 | [zotero-local-mcp.md](references/zotero-local-mcp.md) | 本地库检索、摘要即时入库、全文深读、集合登记 |
 | Phase 1 | [search-strategies.md](references/search-strategies.md) exa 节 | 英文文献 exa MCP 首选协议 |
 | Phase 1 | [mineru-pdf2md.md](references/mineru-pdf2md.md) | 模块内置 MinerU PDF→MD 协议（自包含） |
 | Phase 1 | [search-strategies.md](references/search-strategies.md) | 学科搜索策略+布尔构建 |

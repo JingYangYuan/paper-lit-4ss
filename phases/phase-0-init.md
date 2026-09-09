@@ -196,6 +196,12 @@ options: [
 - `网络不可达`：已做可达性检查但页面无法访问、验证码/登录阻断且用户选择放弃。
 - `待核验`：仅发现标题/题录/片段，尚未取得摘要，不得纳入证据。
 - `能力缺失`：用户选择启用 Zotero/Zotero MCP，但本机未安装、未配置或工具不可用；只影响本地库/全文保存，不影响在线检索。
+- `Zotero MCP 正常`：已按 [zotero-local-mcp.md](references/zotero-local-mcp.md) 完成能力检查，可检索；写入按同一协议即时入库。
+- `Zotero MCP 只读`：能检索和读元数据，不能创建条目；新摘要写入 `abstracts-pending-zotero.md`。
+
+### 0f-1. Zotero MCP 能力检查（仅启用时）
+
+Step 0Q 选择启用 Zotero/Zotero MCP 后，在创建检索式或本地库搜索前按 [zotero-local-mcp.md](references/zotero-local-mcp.md) 第 2 节做能力检查，并把结果写入 `SEARCH_LOG` 的「检索阶段预确认」表。未启用则不得安装、不得写入 Zotero。
 
 | 步骤 | 来源 | 模式A | 模式B | 模式C | 模式D | 模式E |
 |------|------|-------|-------|-------|-------|-------|

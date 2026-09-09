@@ -66,33 +66,78 @@ python3 -c "import pypdf" || command -v pdfinfo || command -v qpdf
 
 没有 Zotero 时，本地文献库阶段不得标记为 `已执行`；应记录为 `用户明确暂缓` 或 `能力缺失`，继续其他在线检索阶段。
 
-## 可选增强：Zotero MCP
+## 可选增强：Zotero MCP（已验证实现：zotero-local-mcp）
 
-Zotero MCP 只在用户需要 Agent 直接搜索 Zotero、读取条目元数据或读取附件全文时启用。本模块不假设宿主已经安装或暴露任何固定名称的 Zotero MCP；安装者应选择自己可用的 Zotero MCP 实现，并按该工具项目的安装说明完成配置。
+Zotero MCP 只在用户需要 Agent 直接搜索 Zotero、写入题录/摘要、管理分类或读取附件全文时启用。本模块不假设宿主已经安装或暴露任何固定名称的 Zotero MCP；下方以 2026-09-09 实跑验证的 `zotero-local-mcp`（本地 Zotero 10 API，无需 Web API key）为推荐实现，其他实现仍按各自项目说明配置，但验收口径不变。
 
-功能验收：
+**操作协议**（检索、即时入库、全文深读、集合、状态词）：[zotero-local-mcp.md](zotero-local-mcp.md)。本节只负责安装、授权、客户端配置与排障。
 
-- 能按关键词检索 Zotero 条目。
-- 能读取指定条目的标题、作者、年份、DOI/URL、期刊/出版社等元数据。
-- 如用户需要全文深读，能读取指定条目或 PDF 附件全文。
+### 安装前提
 
-通用配置形态如下，具体 `command`、`args`、工具名称和环境变量以所选 Zotero MCP 项目为准：
+1. Zotero Desktop **10.0 及以上**，且已开启 设置 → 高级 → 「允许本机上的其他应用程序与 Zotero 通信」（本地 HTTP API，端口 23119）。
+2. 本机已安装 uv（`uv`/`uvx` 可用）。
+3. Zotero Desktop 处于运行状态（本地授权与写入都依赖它）。
+
+### 安装与一次性授权
+
+```bash
+# 1. 安装/更新（升级版本用同一命令重装覆盖）
+uv tool install --force git+https://github.com/JingYangYuan/zotero-local-mcp.git
+
+# 2. 一次性本地授权：会触发 Zotero 授权弹窗，手动点 Always Allow
+pyzotero authorize --app-name "Zotero MCP Local"
+#    密钥落盘 ~/.config/pyzotero/local-api-key.json（含 server_id 与 key）
+
+# 3. 自检：应显示 ZOTERO_LOCAL: true
+zotero-cli --json config
+```
+
+### MCP 客户端配置
+
+常见配置文件：
+
+- Oh My Pi (OMP)：`~/.omp/agent/mcp.json`
+- Claude Desktop：macOS `~/Library/Application Support/Claude/claude_desktop_config.json`；Windows `%APPDATA%\Claude\claude_desktop_config.json`
+- Cursor：项目或用户 `.cursor/mcp.json`
 
 ```json
 {
   "mcpServers": {
-    "zotero-mcp": {
-      "command": "uvx",
-      "args": ["SELECTED_ZOTERO_MCP_PACKAGE_OR_MODULE"],
+    "zotero": {
+      "type": "stdio",
+      "command": "zotero-mcp-server",
+      "args": ["serve"],
       "env": {
-        "ZOTERO_API_KEY": "YOUR_ZOTERO_API_KEY",
-        "ZOTERO_LIBRARY_ID": "YOUR_LIBRARY_ID",
-        "ZOTERO_LIBRARY_TYPE": "user"
+        "ZOTERO_LOCAL": "true",
+        "ZOTERO_MCP_SCHEMA_REFRESH": "0"
       }
     }
   }
 }
 ```
+
+**不要**再配置 `ZOTERO_API_KEY` / `ZOTERO_LIBRARY_ID`：这两个是旧 Web/混合模式残留。残留时 MCP 写入会走错误路径并失败（典型症状见下文排障）。修改配置后必须重启宿主会话，新 env 才会作用于 MCP 进程。
+
+### 功能验收
+
+- 读：按关键词检索条目；读取标题、作者、年份、DOI/URL、期刊等元数据；需要全文深读时能读取附件全文。
+- **写（本地模式必须验收）**：`zotero_add_item` 能创建测试条目并返回 item_key；`zotero_attach_file` 能挂上 PDF 附件；验收后删除测试条目。
+- 验收不过时记录 `能力缺失`；Zotero/Zotero MCP 只影响本地库与全文保存阶段，不影响在线检索与摘要核验。
+
+### 排障记录（2026-09-09 实测）
+
+- 症状：`zotero_add_item`（csl_json/bibtex）报 `conversion failed: Client error '404 Not Found' for url 'http://localhost:23119/api/items/new...'`。
+- 根因：宿主 env 残留 `ZOTERO_API_KEY`/`ZOTERO_LIBRARY_ID`，或 MCP 实现调用了 Zotero 本地 API 不存在的 `/api/items/new` 模板端点（本地 API 只提供 `/api/users/0/items` 等原生端点）。
+- 兜底直写方案（Zotero 10 本地写 API 三步，可用于脚本化导入）：
+  1. `curl -s -D - -o /dev/null http://localhost:23119/api/` 取响应头 `Zotero-Server-ID`；
+  2. 取授权 key：`~/.config/pyzotero/local-api-key.json` 已有则直接用，否则 `POST /api/local/authorize`（body 需含 `appName`）换新 key；
+  3. 带 `Authorization: Bearer <key>` 调 `POST /api/users/0/items`，条目 JSON 数组内直接写 `collections: ["<分类key>"]`、`tags`、`abstractNote`，一次请求完成创建、归类与摘要写入。
+
+### 中文文献导入注意点
+
+- 中文作者使用**单字段模式整串写入**：creators 写 `{"creatorType": "author", "name": "周黎安"}`（姓+名连写，不拆分 lastName/firstName；Zotero 以 fieldMode=1 存储，条目与引文中均显示完整中文姓名）。不要拆成 `lastName=姓`/`firstName=名` 两字段——中文姓名拆分依赖人工判断（复姓、双字姓），拆错会造成引文格式错误。
+- 集刊文献（如《清华社会科学》《中国非营利评论》）用 `bookSection` 类型，`bookTitle` 填集刊名；不要伪装成 journalArticle。
+- 每条正式条目必须带 `abstractNote`（呼应摘要存储铁律），并把返回的 item_key 记入搜索日志论文清单。
 
 本地 Zotero Connector 也可提供轻量保存能力，常见本地接口为：
 

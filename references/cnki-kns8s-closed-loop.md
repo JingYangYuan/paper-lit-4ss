@@ -28,8 +28,8 @@
 
 1. 切换"专业检索"标签必须页内 JS 点击（页面有隐藏重复 DOM，Playwright 点击会落空）：
    `evaluate(() => document.querySelector('li[name="majorSearch"]').click())`
-2. 检索按钮（`input.btn-search`）任何坐标/locator 点击都会因页面点击瞬间重排而失败。唯一可靠方式：
-   `evaluate(() => window.jQuery(document.querySelector('input.btn-search')).trigger('click'))`
+2. 检索按钮必须用**专业检索面板容器限定**的 `#ModuleSearch input.btn-search`。裸 `input.btn-search` 会命中页面里隐藏的镜像按钮（`input.search-btn`），trigger 打到隐藏按钮上会静默失败：无结果表、命中 0、检索词仍留在输入框。任何坐标/locator 真实点击都会因页面点击瞬间重排而失败，唯一可靠方式：
+   `evaluate(() => window.jQuery(document.querySelector('#ModuleSearch input.btn-search')).trigger('click'))`
 3. 结果 AJAX 就地加载（POST `/kns8s/brief/grid`），URL 不变；触发后等 4 秒再读结果表。
 4. 会话开始 `tabs.list()` 可能为空，直接 `tabs.new()` 重开；登录态在 Cookie 中保持。
 5. 同一标签页可连续换词重查（幂等），无需刷新。
@@ -49,21 +49,27 @@ const browser = await agent.browsers.getForUrl("https://www.cnki.net/");
 // 1. 打开/复用检索页；登录检查（页头出现"大学/学院名 + 手机号"=机构授权可用）
 //    未登录：停止，请用户先在浏览器面板完成机构登录，记录 status:"未登录"
 
-// 2. 切专业检索 + 填检索式
+// 2. 切专业检索 + 填检索式（输入框同样以 #ModuleSearch 容器限定）
 await tab.playwright.evaluate(() => document.querySelector('li[name="majorSearch"]').click());
 await tab.playwright.waitForTimeout(1200);
-const ta = tab.playwright.locator("textarea.majorSearch");
+const ta = tab.playwright.locator("#ModuleSearch textarea.majorSearch");
 if ((await ta.count()) !== 1) throw new Error("输入框不唯一");
 await ta.fill(query);
 
-// 3. 触发检索
+// 3. 触发检索（按钮必须带 #ModuleSearch 容器，见硬性经验第 2 条）
 await tab.playwright.evaluate(() => {
-  window.jQuery(document.querySelector('input.btn-search')).trigger('click');
+  window.jQuery(document.querySelector('#ModuleSearch input.btn-search')).trigger('click');
 });
 await tab.playwright.waitForTimeout(4000);
 ```
 
-**检索式构造**（与检索策略顾问协作）：字段 `SU/TI/KY/TKA/AB/AU/LY`；运算符 `*` 与、`+` 或、`-` 非、`''` 短语、`()` 分组。同义/近义词并入同一 `SU=(...)` 组。示例：
+**检索式构造**（与检索策略顾问协作）：字段 `SU/TI/KY/TKA/AB/AU/LY`；运算符 `*` 与、`+` 或、`-` 非、`''` 短语、`()` 分组。两条硬规则（2026-09-09 实测）：
+
+- `+`/`*`/`-` **只能做同一字段内的组合**（同义/近义词并入同一 `SU=(...)` 组）；**跨字段**的逻辑组合必须用字面运算符 `AND`/`OR`/`NOT`。跨字段误用 `+`（如 `AU='周黎安' AND (TI='x' + AB='x')`）不会报错，而是**静默失败**：页面停在输入态、无结果表、命中 0。跨字段正确写法示例：
+  `AU='周黎安' AND (TI='不可能三角' OR AB='不可能三角' OR KY='不可能三角')`
+- 排障顺序：检索触发后无结果表且检索词仍留在输入框 → 先检查是否跨字段用了 `+`（改 `OR` 重试一次），再按验证码几何判据与网络状态排查；不得把语法性静默失败记成 `zero_results` 或 `captcha`。
+
+同字段组合示例：
 `SU=('新就业群体' + '新就业形态劳动者' + '新业态从业人员' + '灵活就业人员')`
 
 **验证码判断**：腾讯滑块常驻 DOM 但藏于视口外，唯一有效判据是几何可见性——
