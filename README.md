@@ -38,7 +38,7 @@ Zotero 是可选增强。启用后按 `references/zotero-local-mcp.md` 做能力
 
 CNKI 依赖可见浏览器控制，后端二选一：ZCode 内置 browser-use（无需安装），或 OMP pi-chrome（一次性加载伴生 Chrome 扩展，见 `references/pi-chrome-browser.md`）。Google Scholar 用 WebFetch/WebSearch。
 
-OMP 后端的安装与适配有公开文档副本，可直接分享：<https://github.com/JingYangYuan/pi-chrome-cnki>（由本包 `scripts/export_pi_chrome_doc.py` 同步导出）。
+OMP 后端的插件本体与适配文档在同一发行仓：<https://github.com/JingYangYuan/pi-chrome-mirror>（由本包 `scripts/export_pi_chrome_repo.py` 同步导出，含完整插件与伴生扩展）。
 
 ## 安装
 
