@@ -4,7 +4,7 @@
 
 # Paper 文献综述 4SS
 
-中英文双语文献综述与假设推导一体化技能。支持五种模式：完整文献地图（A）、定向综述（B）、快速概览（C）、文献综述+假设推导（D）、知网专项搜索（E）。自动搜索本地文献库、CNKI 中文文献（浏览器控制 kns8s 专业检索，后端为 ZCode 内置 browser-use、OMP pi-chrome 或 OMP Eval 备选）、Google Scholar、WebSearch、Annual Reviews，生成结构化文献景观地图；收到理论、规范或阐释设计报告时在既有流程中组织支持立场、竞争立场和反例材料，不强制假设推导。当用户需要写文献综述、做系统回顾、找研究空白、提出研究假设、搜索中英文文献时使用。
+中英文双语文献综述与假设推导一体化技能。支持五种模式：完整文献地图（A）、定向综述（B）、快速概览（C）、文献综述+假设推导（D）、知网专项搜索（E）。自动搜索本地文献库、CNKI 中文文献（`browser_control` 的 kns8s 专业检索，后端按宿主探测选取，已知样例见适配文档）、Google Scholar、`web_search`、Annual Reviews，生成结构化文献景观地图；收到理论、规范或阐释设计报告时在既有流程中组织支持立场、竞争立场和反例材料，不强制假设推导。当用户需要写文献综述、做系统回顾、找研究空白、提出研究假设、搜索中英文文献时使用。
 
 ## 4SS 家族
 
@@ -37,7 +37,7 @@ Zotero 是可选增强。启用后按 `references/zotero-local-mcp.md` 做能力
 | D 综述+假设 | 5 轮以上，含假设推导 |
 | E 知网专项 | CNKI kns8s 闭环为主 |
 
-CNKI 依赖可见浏览器控制，后端二选一：ZCode 内置 browser-use（无需安装），或 OMP pi-chrome（一次性加载伴生 Chrome 扩展，见 `references/pi-chrome-browser.md`）。Google Scholar 用 WebFetch/WebSearch。
+CNKI 依赖可见浏览器控制（`browser_control`）：后端按宿主选取，常见样例为 ZCode 内置 browser-use（无需安装）与 OMP pi-chrome（一次性加载伴生 Chrome 扩展，见 `references/pi-chrome-browser.md`）。Google Scholar 检索用 `web_fetch`/`web_search` 能力。
 
 OMP 后端的插件本体与适配文档在同一发行仓：<https://github.com/JingYangYuan/pi-chrome-mirror>（由本包 `scripts/export_pi_chrome_repo.py` 同步导出，含完整插件与伴生扩展）。
 
