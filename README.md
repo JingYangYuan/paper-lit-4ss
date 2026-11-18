@@ -4,7 +4,7 @@
 
 # Paper 文献综述 4SS
 
-中英文双语文献综述与假设推导一体化技能。支持五种模式：完整文献地图（A）、定向综述（B）、快速概览（C）、文献综述+假设推导（D）、知网专项搜索（E）。自动搜索本地文献库、CNKI 中文文献（`browser_control` 的 kns8s 专业检索，后端按宿主探测选取，已知样例见适配文档）、Google Scholar、`web_search`、Annual Reviews，生成结构化文献景观地图；收到理论、规范或阐释设计报告时在既有流程中组织支持立场、竞争立场和反例材料，不强制假设推导。当用户需要写文献综述、做系统回顾、找研究空白、提出研究假设、搜索中英文文献时使用。
+中英文双语文献检索下载、文献综述与假设推导一体化技能。支持五种模式：完整文献地图（A）、定向综述（B）、快速概览（C）、文献综述+假设推导（D）、中文/书目批量落地（E）。集成 lit-down 检索下载管线：英文走 Crossref 定位 DOI、按年份分流 Sci-Hub 镜像与 OA 链（Unpaywall/OpenAlex/Europe PMC/arXiv/NBER）、web_search 机构库补位与 LibGen 专著书轮；中文走 NCPSSD 免登录定位（64 种 CSSCI 顶刊分级）与知网机构出口（专业检索+下载单+Referer 直取），配备四件套内容校验、断点续跑与 MinerU/Zotero/文献地图交接。
 
 ## 4SS 家族
 
@@ -23,7 +23,7 @@
 
 ## 它做什么
 
-按固定检索顺序做中英文文献综述：方向确认 → WebSearch → 本地库 / Zotero MCP（可选）→ Annual Reviews → 引文链 → CNKI / Google Scholar 精准补充 → 文献地图。模式 D 才推导假设。
+集成 `lit-down` 文献检索下载管线与文献综述流程：方向确认 → 探活与出口 IP 检查 → 定位分流（中文走 NCPSSD 免登录定位与 64 种 CSSCI 顶刊分级；英文走 Crossref + audit）→ 下载落地（英文按年份分流 `mirror-first` / `oa-first` + `web_search` 补位 + LibGen 专著书轮；中文走知网专业检索 + 下载单直取）→ 四件套内容校验 → 注册表归档与 MinerU 全文化 → 文献地图与假设推导（模式 D）。
 
 Zotero 是可选增强。启用后按 `references/zotero-local-mcp.md` 做能力检查、本地库检索、摘要即时入库和全文深读；未启用不得强制安装。
 
@@ -31,15 +31,13 @@ Zotero 是可选增强。启用后按 `references/zotero-local-mcp.md` 做能力
 
 | 模式 | 用途 |
 |---|---|
-| A 完整地图 | 6 轮以上检索，40–80 篇 |
-| B 定向综述 | 4 轮，15–30 篇 |
-| C 快速概览 | 2 轮，10–20 篇 |
-| D 综述+假设 | 5 轮以上，含假设推导 |
-| E 知网专项 | CNKI kns8s 闭环为主 |
+| A 完整地图 | 6 轮以上双语检索落地，40–80 篇 |
+| B 定向综述 | 4 轮核心检索落地，15–30 篇 |
+| C 快速概览 | 2 轮快速检索，10–20 篇 |
+| D 综述+假设 | 5 轮以上检索落地，含假设推导 |
+| E 检索与下载专项 | 中文 NCPSSD→CNKI / 英文 Crossref→镜像/OA/LibGen 批量落地 |
 
-CNKI 依赖可见浏览器控制（`browser_control`）：后端按宿主选取，常见样例为 ZCode 内置 browser-use（无需安装）与 OMP pi-chrome（一次性加载伴生 Chrome 扩展，见 `references/pi-chrome-browser.md`）。Google Scholar 检索用 `web_fetch`/`web_search` 能力。
-
-OMP 后端的插件本体与适配文档在同一发行仓：<https://github.com/JingYangYuan/pi-chrome-mirror>（由本包 `scripts/export_pi_chrome_repo.py` 同步导出，含完整插件与伴生扩展）。
+CNKI 取全文与浏览器 CDP 兜底依赖可见浏览器控制（`browser_control`）：统一走 `ego-browser` 后端（见 `references/browser.md` 与 `references/cnki.md`）；纯英文 HTTP 渠道与中文 NCPSSD 定位无需浏览器即可执行。
 
 ## 安装
 
